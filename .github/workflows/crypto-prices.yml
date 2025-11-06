@@ -1,4 +1,4 @@
-name: Crypto Prices CI
+name: Crypto Prices CI/CD
 
 on:
   push:
@@ -21,21 +21,29 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: crypto-fin-dashboard/crypto-prices
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+  ECS_CLUSTER: crypto-fin-dashboard
+  ECS_SERVICE: crypto-prices
+
 jobs:
-  test-and-build:
+  test-build-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: services/crypto-prices
+
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
+          cache: pip
           cache-dependency-path: services/crypto-prices/requirements.txt
 
       - name: Install dependencies
@@ -49,10 +57,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          context: services/crypto-prices
-          load: true
-          push: false
-          tags: crypto-prices:ci
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Capture image metadata
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_ENV
+
+      - name: Build, tag, and push Docker image
+        run: |
+          IMAGE_TAG=${COMMIT_HASH}-${TIMESTAMP}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+#     - name: Update ECS service
+  #      run: |
+   #       aws ecs update-service \
+    #        --cluster $ECS_CLUSTER \
+     #       --service $ECS_SERVICE \
+      #      --force-new-deployment

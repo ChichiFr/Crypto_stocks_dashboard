@@ -1,4 +1,4 @@
-name: Gateway CI
+name: Gateway CI/CD
 
 on:
   push:
@@ -21,23 +21,63 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: crypto-fin-dashboard/gateway
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+  ECS_CLUSTER: crypto-fin-dashboard
+  ECS_SERVICE: gateway
+
 jobs:
-  build-and-verify:
+  build-validate-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway
+
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          context: gateway
-          load: true
-          push: false
-          tags: gateway:ci
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Capture image metadata
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=${COMMIT_HASH}-${TIMESTAMP}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Validate nginx configuration
-        run: docker run --rm gateway:ci nginx -t
+        run: |
+          IMAGE_TAG=${COMMIT_HASH}-${TIMESTAMP}
+          docker run --rm $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG nginx -t
+
+      - name: Push Docker image
+        run: |
+          IMAGE_TAG=${COMMIT_HASH}-${TIMESTAMP}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+#     - name: Update ECS service
+  #      run: |
+   #       aws ecs update-service \
+    #        --cluster $ECS_CLUSTER \
+     #       --service $ECS_SERVICE \
+      #      --force-new-deployment
