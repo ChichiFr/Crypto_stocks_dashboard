@@ -22,9 +22,8 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: us-east-2
   ECR_REPOSITORY: crypto-fin-dashboard/ml-signals
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
   ECS_CLUSTER: crypto-fin-dashboard
   ECS_SERVICE: ml-signals
 
@@ -62,7 +61,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-2
 
       - name: Login to Amazon ECR
         id: login-ecr
