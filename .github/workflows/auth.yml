@@ -1,0 +1,58 @@
+name: Auth Service CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'services/auth/**'
+      - '.github/workflows/auth.yml'
+      - 'docker-compose.yml'
+  pull_request:
+    paths:
+      - 'services/auth/**'
+      - '.github/workflows/auth.yml'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: auth-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/auth
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: services/auth/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run unit tests
+        run: pytest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/auth
+          load: true
+          push: false
+          tags: auth:ci

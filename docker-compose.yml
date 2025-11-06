@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  auth:
+    build: ./services/auth
+    container_name: auth
+    ports: ["8081:8080"]
+
+  crypto-prices:
+    build: ./services/crypto-prices
+    container_name: crypto-prices
+    ports: ["8082:8080"]
+
+  stocks-prices:
+    build: ./services/stocks-prices
+    container_name: stocks-prices
+    ports: ["8083:8080"]
+
+  portfolio:
+    build: ./services/portfolio
+    container_name: portfolio
+    ports: ["8084:8080"]
+
+  ml-signals:
+    build: ./services/ml-signals
+    container_name: ml-signals
+    ports: ["8085:8080"]
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    ports: ["8080:80"]
+    depends_on:
+      - auth
+      - crypto-prices
+      - stocks-prices
+      - portfolio
+      - ml-signals

@@ -1,0 +1,43 @@
+name: Gateway CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'gateway/**'
+      - '.github/workflows/gateway.yml'
+      - 'docker-compose.yml'
+  pull_request:
+    paths:
+      - 'gateway/**'
+      - '.github/workflows/gateway.yml'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: gateway-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: gateway
+          load: true
+          push: false
+          tags: gateway:ci
+
+      - name: Validate nginx configuration
+        run: docker run --rm gateway:ci nginx -t
