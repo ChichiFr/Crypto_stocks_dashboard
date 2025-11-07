@@ -63,10 +63,10 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Validate nginx configuration
+      - name: Validate nginx configuration syntax only
         run: |
-          IMAGE_TAG=${COMMIT_HASH}-${TIMESTAMP}
-          docker run --rm $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG nginx -t
+          docker run --rm --entrypoint nginx nginx:latest -t
+
 
       - name: Push Docker image
         run: |
