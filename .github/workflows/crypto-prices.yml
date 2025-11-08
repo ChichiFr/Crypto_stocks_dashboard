@@ -25,7 +25,7 @@ env:
   ECR_REPOSITORY: crypto-fin-dashboard/crypto-prices
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
   ECS_CLUSTER: crypto-fin-dashboard
-  ECS_SERVICE: crypto-prices
+  ECS_SERVICE: crypto-prices-service-10g3i2mb 
 
 jobs:
   test-build-deploy:
@@ -80,9 +80,9 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-#     - name: Update ECS service
-  #      run: |
-   #       aws ecs update-service \
-    #        --cluster $ECS_CLUSTER \
-     #       --service $ECS_SERVICE \
-      #      --force-new-deployment
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment

@@ -80,9 +80,9 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Update ECS service
-        run: |
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --force-new-deployment
+#     - name: Update ECS service
+  #      run: |
+   #       aws ecs update-service \
+    #        --cluster $ECS_CLUSTER \
+     #       --service $ECS_SERVICE \
+      #      --force-new-deployment
