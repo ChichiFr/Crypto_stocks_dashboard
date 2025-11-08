@@ -12,7 +12,7 @@ class Holding(BaseModel):
 
 @app.get("/healthz")
 def healthz():
-    return {"New": "I changed the code"}
+    return {"Status": "ok", "service": "portfolio"}
 
 @app.get("/holdings")
 def get_holdings(user: str = "alice") -> Dict[str, List[Holding]]:
