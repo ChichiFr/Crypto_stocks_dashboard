@@ -1,4 +1,4 @@
-# Crypto & Stocks Dashboard — 6 Services (Jenkins-ready)
+# Crypto & Stocks Dashboard — 5 Services (Github Qctions)
 
 This repo hosts 6 containerized services you can wire to a Jenkins CI/CD pipeline later.
 
