@@ -25,7 +25,7 @@ env:
   ECR_REPOSITORY: crypto-fin-dashboard/stock-prices
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
   ECS_CLUSTER: crypto-fin-dashboard
-  ECS_SERVICE: stock-prices
+  ECS_SERVICE: stocks-prices
 
 jobs:
   test-build-deploy:
