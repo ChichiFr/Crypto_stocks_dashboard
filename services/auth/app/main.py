@@ -15,7 +15,7 @@ class LoginIn(BaseModel):
 
 @app.get("/healthz")
 def healthz():
-    return {"status": "ok", "service": "auth"}
+    return {"status": "ok", "service": "luth"}
 
 @app.post("/login")
 def login(payload: LoginIn):
